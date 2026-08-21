@@ -28,3 +28,22 @@ export function getDefaultGameKey() {
 export function buildApiUrl(baseUrl, path) {
   return `${String(baseUrl).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
 }
+
+export function buildOfflinePick(game) {
+  if (!game?.key || !Number.isInteger(game.mainCount) || !Number.isInteger(game.maxNumber)) {
+    return null;
+  }
+
+  const numbers = new Set();
+  while (numbers.size < game.mainCount) {
+    numbers.add(Math.floor(Math.random() * game.maxNumber) + 1);
+  }
+
+  return {
+    game: game.label,
+    gameKey: game.key,
+    numbers: [...numbers].sort((a, b) => a - b),
+    note: 'Generated offline for fun. Not a prediction.',
+    source: 'offline'
+  };
+}

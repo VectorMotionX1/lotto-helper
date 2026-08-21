@@ -13,6 +13,7 @@ import {
 
 import {
   API_BASE_URL,
+  buildOfflinePick,
   buildApiUrl,
   GAME_OPTIONS,
   getDefaultGameKey
@@ -102,7 +103,8 @@ export default function App() {
       const data = await fetchJson(game.pickPath);
       setPick(data);
     } catch {
-      setError(`Could not generate ${getGameDisplayName(game)} numbers.`);
+      setPick(buildOfflinePick(game));
+      setError('Live service unavailable. Generated an offline quick pick.');
     } finally {
       setLoadingPick(false);
     }
