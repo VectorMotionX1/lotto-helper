@@ -11,6 +11,21 @@ export function randomUniqueFromRange(count, maxNumber, excluded = []) {
   return out;
 }
 
+export function buildOfflinePick(game) {
+  if (!game?.label || !Number.isInteger(game.mainCount) || !Number.isInteger(game.maxNumber))
+    return null;
+
+  return {
+    game: game.label,
+    gameKey: game.key,
+    numbers: randomUniqueFromRange(game.mainCount, game.maxNumber).sort(
+      (a, b) => a - b
+    ),
+    note: 'Generated offline for fun. Not a prediction.',
+    source: 'offline'
+  };
+}
+
 export function buildFavoriteMix({
   baseNumbers = [],
   favorites = [],
@@ -53,6 +68,22 @@ export function buildCopyText(pick) {
 
   const headline = `${pick.game}: ${pick.numbers.join(', ')}`;
   return pick.note ? `${headline} — ${pick.note}` : headline;
+}
+
+export function appendPickHistory(history, pick, timestamp = Date.now()) {
+  if (!pick?.gameKey || !Array.isArray(pick?.numbers) || !pick.numbers.length)
+    return history || [];
+
+  const entry = {
+    id: `${pick.gameKey}-${timestamp}`,
+    gameKey: pick.gameKey,
+    game: pick.game,
+    numbers: [...pick.numbers],
+    note: pick.note || '',
+    createdAt: timestamp
+  };
+
+  return [entry, ...(history || [])].slice(0, 5);
 }
 
 export function buildStoreSummary(store) {

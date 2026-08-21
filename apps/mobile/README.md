@@ -1,5 +1,7 @@
 # @lotto/mobile
 
+The mobile app falls back to a locally generated quick pick when the live API is unavailable. The result is labeled as offline-generated and retains the entertainment-only disclaimer.
+
 Expo + React Native Android app for Lotto Helper.
 
 This app lives separately from the web portal:

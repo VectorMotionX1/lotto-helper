@@ -29,3 +29,4 @@ This app is now intended to work with Vercel-only deployment using root-level Ve
 
 - The UI now lets the user switch between Lotto Max and Lotto 6/49.
 - Main picked numbers are displayed separately from the bonus number to avoid making the bonus look like an extra user-selected number.
+- If the live pick API is unavailable, the app generates a local quick pick for offline use and labels it clearly as offline-generated.

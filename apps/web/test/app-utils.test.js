@@ -2,10 +2,37 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildOfflinePick,
+  appendPickHistory,
   buildFavoriteMix,
   buildCopyText,
   buildStoreSummary
 } from '../src/app-utils.js';
+
+test('buildOfflinePick creates a valid local quick pick', () => {
+  const pick = buildOfflinePick({
+    key: 'lotto649',
+    label: 'Lotto 6/49',
+    mainCount: 6,
+    maxNumber: 49
+  });
+
+  assert.equal(pick.source, 'offline');
+  assert.equal(pick.numbers.length, 6);
+  assert.equal(new Set(pick.numbers).size, 6);
+  assert.ok(pick.numbers.every((number) => number >= 1 && number <= 49));
+});
+
+test('appendPickHistory keeps the five newest picks', () => {
+  const history = appendPickHistory(
+    Array.from({ length: 5 }, (_, index) => ({ id: String(index) })),
+    { gameKey: 'lottomax', game: 'Lotto Max', numbers: [1, 2, 3], note: 'Offline' },
+    100
+  );
+
+  assert.equal(history.length, 5);
+  assert.equal(history[0].id, 'lottomax-100');
+});
 
 test('buildFavoriteMix keeps favorites, removes duplicates, and returns a sorted pick', () => {
   const result = buildFavoriteMix({

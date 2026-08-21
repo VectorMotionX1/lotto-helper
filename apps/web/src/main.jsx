@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client';
 
 import './styles.css';
 import {
+  buildOfflinePick,
   buildCopyText,
+  appendPickHistory,
   buildFavoriteMix,
   buildStoreSummary,
   getRefreshLabel
@@ -41,6 +43,7 @@ const GAME_OPTIONS = {
 };
 
 const FAV_KEY_PREFIX = 'lotto-favorite-numbers-v2';
+const HISTORY_KEY = 'lotto-pick-history-v1';
 
 function App() {
   const [gameKey, setGameKey] = useState('lottomax');
@@ -57,6 +60,15 @@ function App() {
   const [showFavoritePanel, setShowFavoritePanel] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [history, setHistory] = useState(() => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.slice(0, 5) : [];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     try {
@@ -79,6 +91,10 @@ function App() {
   }, [favKey, favorites]);
 
   useEffect(() => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }, [history]);
+
+  useEffect(() => {
     if (!copied) return undefined;
 
     const timer = setTimeout(() => setCopied(false), 2200);
@@ -91,16 +107,23 @@ function App() {
     return response.json();
   };
 
+  const recordPick = (data) => {
+    setPick(data);
+    setHistory((current) => appendPickHistory(current, data));
+    setRevealTick((tick) => tick + 1);
+  };
+
   const generatePick = async () => {
     setError('');
     setCopied(false);
     setLoadingPick(true);
     try {
       const data = await fetchPick();
-      setPick(data);
-      setRevealTick((tick) => tick + 1);
+      recordPick(data);
     } catch {
-      setError(`Could not generate ${game.label} numbers.`);
+      const offlinePick = buildOfflinePick(game);
+      recordPick(offlinePick);
+      setError('Live service unavailable. Generated an offline quick pick.');
     } finally {
       setLoadingPick(false);
     }
@@ -125,13 +148,12 @@ function App() {
         maxNumber: game.maxNumber
       });
 
-      setPick({
+      recordPick({
         ...base,
         numbers: finalNumbers,
         bonus: null,
         note: `Favorites mix applied (${Math.min(favorites.length, game.mainCount)} guaranteed favorite${favorites.length === 1 ? '' : 's'}). ${base.note || ''}`.trim()
       });
-      setRevealTick((tick) => tick + 1);
     } catch {
       setError(`Could not generate a ${game.label} favorites mix.`);
     } finally {
@@ -388,6 +410,23 @@ function App() {
             </div>
 
             <p className="muted">{pick.note}</p>
+          </section>
+        )}
+
+        {history.filter((entry) => entry.gameKey === gameKey).length > 0 && (
+          <section className="card glass">
+            <div className="card-header">
+              <h3>Recent Picks</h3>
+              <span className="chip">Saved on this device</span>
+            </div>
+            <div className="quick-store">
+              {history.filter((entry) => entry.gameKey === gameKey).map((entry) => (
+                <p className="quick-sub" key={entry.id}>
+                  <strong>{entry.numbers.join(', ')}</strong> ·{' '}
+                  {new Date(entry.createdAt).toLocaleString()}
+                </p>
+              ))}
+            </div>
           </section>
         )}
 
